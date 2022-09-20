@@ -4,6 +4,15 @@ import crypto from 'crypto';
 export class Utils {
     private CUFE = 'CUFE';
     private CUDE = 'CUDE';
+    public COLOMBIA_CODE_ISO_2 = "CO";
+    public SCHEMA_AGENCY_NAME = "CO, DIAN (Dirección de Impuestos y Aduanas Nacionales)";
+    public SCHEMA_AGENCY_ID = "195";
+    public DIAN_DV = "4";
+    public DIAN_IDENTIFICATION_NUMBER = "800197268";
+    public DIAN_DOC_TYPE = "31";
+    public UBL_VERSION = "UBL 2.1";
+    public INVOICE_TYPE = "10";
+    public LANGUAJE_ID = "es";
 
     constructor() {
 

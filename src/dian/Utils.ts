@@ -13,6 +13,7 @@ export class Utils {
     public UBL_VERSION = "UBL 2.1";
     public INVOICE_TYPE = "10";
     public LANGUAJE_ID = "es";
+    public UNIT_CODE_CREDIT_NOTE = 'NIU';
 
     constructor() {
 

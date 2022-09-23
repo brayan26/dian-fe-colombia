@@ -1,4 +1,4 @@
-export interface IFiscalDocument {
+export interface IFiscalDocument extends IFiscalDocumentCreditAndDebitNote {
     //Numero de comprobante
     invoiceNumber: number;
     //Fecha y hora de emision de la factura
@@ -171,5 +171,13 @@ export interface ICompany {
 }
 
 export interface Ubl {
-    mapToUbl(document: IFiscalDocument, company: ICompany): any;
+    mapToUbl(): any;
+}
+
+interface IFiscalDocumentCreditAndDebitNote {
+    typeNote?: string;
+    descriptionTypeNote?: string;
+    relatedInvoice?: string;
+    relatedCufe: string;
+    relatedInvoiceDate: Date;
 }

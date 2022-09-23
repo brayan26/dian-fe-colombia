@@ -71,15 +71,33 @@ const document: IFiscalDocument = {
         startDate: '2022-09-12',
         endDate: '2023-09-12',
     },
-    items: [],
+    items: [{
+        item: 12,
+        concept: 1,
+        note: 'PRODUCTO DE PRUEBA',
+        um: 'UND',
+        totalPrice: 100000.00,
+        quantity: 1,
+        tax: {
+            totalAmount: 19000.00,
+            roundingAmount: 0.00,
+            baseAmount: 100000.00,
+            amount: 19000.00,
+            baseUnitMeasure: 100000.00,
+            measurementunit: 'UND',
+            perUnitAmount: 19.00,
+            percent: 19.00,
+            code: '01',
+            name: 'IVA'
+        }
+    }],
+    relatedCufe: '',
+    relatedInvoiceDate: new Date()
 };
 
 const ubl = UblFactory.getInstance(document, company);
 
-ubl.mapToUbl(document, company)
-    .then(async (resp: any) => {
-        console.log(await resp.toXml());
-    })
-    .catch((err: any) => {
-        console.error(err);
-    });
+(async () => {
+    console.log(
+        await(await ubl.mapToUbl()).toXml());
+})();

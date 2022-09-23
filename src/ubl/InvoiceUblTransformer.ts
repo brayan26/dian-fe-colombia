@@ -1,18 +1,11 @@
 import { IFiscalDocument, ICompany, Ubl } from '../dian/IFiscalDocument';
-const xml2js = require('xml2js');
-import { Utils } from '../dian/Utils';
+import { UblBuildFactory } from './UblBuildFactory';
 
-export class InvoiceUblTransformer implements Ubl {
-    _json: any;
-    _xml = '';
-    private _document: IFiscalDocument;
-    private _company: ICompany;
-    private _utils: Utils;
+export class InvoiceUblTransformer extends UblBuildFactory implements Ubl {
+    private ROOT_TAG = 'Invoice';
 
     constructor(document: IFiscalDocument, company: ICompany) {
-        this._document = document;
-        this._company = company;
-        this._utils = new Utils();
+        super(document, company);
     }
 
     public async mapToUbl(): Promise<InvoiceUblTransformer> {
@@ -146,6 +139,7 @@ export class InvoiceUblTransformer implements Ubl {
                 },
                 'cbc:UBLVersionID': this._utils.UBL_VERSION,
                 'cbc:CustomizationID': this._utils.INVOICE_TYPE,
+                'cbc:ProfileID': 'DIAN 2.1: Factura Electrónica de Venta',
                 'cbc:ProfileExecutionID': environment,
                 'cbc:ID': `${
                     this._document.pos.prefix + this._document.invoiceNumber
@@ -155,10 +149,7 @@ export class InvoiceUblTransformer implements Ubl {
                         schemeID: environment,
                         schemeName: 'CUFE-SHA384',
                     },
-                    _: await this._utils.getCufeSha384(
-                        this._document,
-                        this._company
-                    ),
+                    _: cufe,
                 },
                 'cbc:IssueDate': this._utils.formatDate(
                     this._document.invoiceDate,
@@ -175,395 +166,96 @@ export class InvoiceUblTransformer implements Ubl {
                 'cbc:LineCountNumeric': this._document.items.length,
             },
         };
-        this.withSupplier()
-            .withCustomer()
-            .withFiscalRepresentative()
-            .withPaymethods()
-            .withTRM()
-            .withTaxs()
-            .withTotals()
-            .withItems();
+
+        //Parent methods
+        this.withSupplier(this.ROOT_TAG)
+            .withCustomer(this.ROOT_TAG)
+            .withFiscalRepresentative(this.ROOT_TAG)
+            .withPaymethods(this.ROOT_TAG)
+            .withTRM(this.ROOT_TAG)
+            .withTaxs(this.ROOT_TAG)
+            .withTotals(this.ROOT_TAG);
+        //Items InvoiceLine
+        this.withItems();
         return this;
     }
 
-    public withSupplier(): InvoiceUblTransformer {
-        this._json.Invoice['cac:AccountingSupplierParty'] = {
-            'cbc:AdditionalAccountID': {
-                $: {
-                    schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
-                },
-                _: this._company.additionalAccountID,
-            },
-            'cac:Party': {
-                'cac:PartyName': {
-                    'cbc:Name': this._company.fullName,
-                },
-                'cac:PhysicalLocation': {
-                    'cac:Address': {
-                        'cbc:ID': this._company.cityCode,
-                        'cbc:CityName': this._company.cityName,
-                        'cbc:CountrySubentity': this._company.stateName,
-                        'cbc:CountrySubentityCode': this._company.stateCode,
-                        'cac:AddressLine': {
-                            'cbc:Line': this._company.addressLine,
-                        },
-                    },
-                },
-                'cac:PartyTaxScheme': {
-                    'cbc:RegistrationName': this._company.fullName,
-                    'cbc:CompanyID': {
-                        $: {
-                            schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
-                            schemeAgencyName: this._utils.SCHEMA_AGENCY_NAME,
-                            schemeID: this._company.dv,
-                            schemeName: this._company.documentType,
-                        },
-                        _: this._company.identificationNumber,
-                    },
-                    'cbc:TaxLevelCode': this._company.taxLevelCode,
-                    'cac:RegistrationAddress': {
-                        'cbc:ID': this._company.cityCode,
-                        'cbc:CityName': this._company.cityName,
-                        'cbc:CountrySubentity': this._company.stateName,
-                        'cbc:CountrySubentityCode': this._company.stateCode,
-                        'cac:AddressLine': {
-                            'cbc:Line': this._company.addressLine,
-                        },
-                        'cac:Country': {
-                            'cbc:IdentificationCode': this._company.countryCode,
-                            'cbc:Name': {
-                                $: {
-                                    languageID: this._utils.LANGUAJE_ID,
-                                },
-                                _: this._company.countryName,
-                            },
-                        },
-                    },
-                    'cac:TaxScheme': {
-                        'cbc:ID': this._company.taxId
-                            ? this._company.taxId
-                            : '',
-                        'cbc:Name': this._company.taxName
-                            ? this._company.taxName
-                            : '',
-                    },
-                },
-                'cac:PartyLegalEntity': {
-                    'cbc:RegistrationName': this._company.fullName,
-                    'cbc:CompanyID': {
-                        $: {
-                            schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
-                            schemeAgencyName: this._utils.SCHEMA_AGENCY_NAME,
-                            schemeID: this._company.dv,
-                            schemeName: this._company.documentType,
-                        },
-                        _: this._company.identificationNumber,
-                    },
-                    //cac:CorporateRegistrationScheme
-                    'cac:Contact': {
-                        'cbc:Telephone': this._company.contactPhone,
-                        'cbc:ElectronicMail':
-                            this._company.contactElectronicMail,
-                    },
-                },
-            },
-        };
-        return this;
-    }
-
-    public withCustomer(): InvoiceUblTransformer {
-        this._json.Invoice['cac:AccountingCustomer'] = {
-            'cbc:AdditionalAccountID': this._document.customer.entityType,
-            'cac:Party': {
-                'cac:PartyIdentification': {
-                    'cbc:ID': this._document.customer.idCustomer,
-                },
-                'cac:PartyName': {
-                    'cbc:Name': this._document.customer.name,
-                },
-                'cac:PhysicalLocation': {
-                    'cac:Address': {
-                        'cbc:ID': this._document.customer.cityCode,
-                        'cbc:CityName': this._document.customer.cityName,
-                        'cbc:CountrySubentity':
-                            this._document.customer.departmentName,
-                        'cbc:CountrySubentityCode':
-                            this._document.customer.departmentCode,
-                        'cac:AddressLine': {
-                            'cbc:Line': this._document.customer.fiscalAddress,
-                        },
-                        'cac:Country': {
-                            'cbc:IdentificationCode': this._company.countryCode,
-                            'cbc:Name': {
-                                $: {
-                                    languageID: this._utils.LANGUAJE_ID,
-                                },
-                                _: this._company.countryName,
-                            },
-                        },
-                    },
-                },
-                'cac:PartyTaxScheme': {
-                    'cbc:RegistrationName': this._document.customer.name,
-                    'cbc:CompanyID': {
-                        $: {
-                            schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
-                            schemeAgencyName: this._utils.SCHEMA_AGENCY_NAME,
-                            schemeID: this._document.customer.dvNit,
-                            schemeName: this._document.customer.documentType,
-                        },
-                        _: this._document.customer.idCustomer,
-                    },
-                    'cbc:TaxLevelCode': this._document.customer.taxLevelCode
-                        ? this._document.customer.taxLevelCode
-                        : 'R-99-PN',
-                    'cac:TaxScheme': {
-                        'cbc:ID': this._document.customer.taxId
-                            ? this._document.customer.taxId
-                            : 'ZZ',
-                        'cbc:Name': this._document.customer.taxName
-                            ? this._document.customer.taxName
-                            : 'No Aplica',
-                    },
-                },
-                'cac:PartyLegalEntity': {
-                    'cbc:RegistrationName': this._document.customer.name,
-                    'cbc:CompanyID': {
-                        $: {
-                            schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
-                            schemeAgencyName: this._utils.SCHEMA_AGENCY_NAME,
-                            schemeID: this._document.customer.dvNit,
-                            schemeName: this._document.customer.documentType,
-                        },
-                        _: this._document.customer.idCustomer,
-                    },
-                },
-                'cac:Contact': {
-                    'cbc:Telephone': this._document.customer.contactPhone,
-                    'cbc:ElectronicMail':
-                        this._document.customer.contactElectronicMail,
-                },
-            },
-        };
-        return this;
-    }
-
-    public withFiscalRepresentative(): InvoiceUblTransformer {
-        this._json.Invoice['cac:TaxRepresentativeParty'] = {
-            'cac:PartyIdentification': {
-                'cbc:ID': {
+    private withItems(): void {
+        let i = 0;
+        this._json.Invoice['cac:InvoiceLine'] = [];
+        for (const item of this._document.items) {
+            let invoiceLine: any = {
+                'cbc:ID': ++i,
+                'cbc:InvoicedQuantity': {
                     $: {
-                        schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
-                        schemeAgencyName: this._utils.SCHEMA_AGENCY_NAME,
-                        schemeID: this._document.customer.dvNit,
-                        schemeName: this._document.customer.documentType,
+                        unitCode: item.um,
                     },
-                    _: this._document.customer.idCustomer,
+                    _: item.quantity,
                 },
-                'cac:PartyName': {
-                    'cbc:Name': this._document.customer.name,
-                },
-            },
-        };
-        return this;
-    }
-
-    public withTaxs(): InvoiceUblTransformer {
-        for (const tax of this._document.relatedTaxes) {
-            this._json.Invoice['cac:TaxTotal'] = [
-                {
+                'cbc:LineExtensionAmount': {
+                    $: {
+                        currencyID: this._document.currency,
+                    },
+                    _: item.totalPrice,
+                }
+            };
+            //Tax
+            if (Object.keys(item.tax).length > 0) {
+                let tax: any = {
                     'cbc:TaxAmount': {
                         $: {
                             currencyID: this._document.currency,
                         },
-                        _: tax.totalAmount,
+                        _: item.tax.totalAmount,
                     },
                     'cbc:RoundingAmount': {
                         $: {
                             currencyID: this._document.currency,
                         },
-                        _: tax.roundingAmount,
+                        _: item.tax.roundingAmount,
                     },
                     'cac:TaxSubtotal': {
                         'cbc:TaxableAmount': {
                             $: {
                                 currencyID: this._document.currency,
                             },
-                            _: tax.baseAmount,
+                            _: item.tax.baseAmount,
                         },
-                        'cbc:TaxAmount': {
-                            $: {
-                                currencyID: this._document.currency,
-                            },
-                            _: tax.totalAmount,
-                        },
-                        'cac:TaxCategory': {
-                            'cbc:Percent': tax.percent,
-                            'cac:TaxScheme': {
-                                'cbc:ID': tax.code,
-                                'cbc:Name': tax.name,
-                            },
-                        },
-                    },
-                },
-            ];
-        }
-        return this;
-    }
-
-    public withPaymethods(): InvoiceUblTransformer {
-        let i = 0;
-        for (const paymentMethod of this._document.paymentMethods) {
-            this._json.Invoice['cac:PaymentMeans'] = [
-                {
-                    'cbc:ID': paymentMethod.paymentType,
-                    'cbc:PaymentMeansCode': paymentMethod.code,
-                    'cbc:PaymentDueDate': paymentMethod.dueDate,
-                    'cbc:PaymentID': ++i,
-                },
-            ];
-        }
-        return this;
-    }
-
-    public withTRM(): InvoiceUblTransformer {
-        this._json.Invoice['cac:PaymentExchangeRate'] = {
-            'cbc:SourceCurrencyCode': this._document.currency,
-            'cbc:SourceCurrencyBaseRate': '1.00',
-            'cbc:TargetCurrencyCode': this._document.currency,
-            'cbc:TargetCurrencyBaseRate': '1.00',
-            'cbc:CalculationRate': '1.00',
-            'cbc:Date': this._utils.formatDate(
-                this._document.invoiceDate,
-                true
-            ),
-        };
-        return this;
-    }
-
-    public withTotals(): InvoiceUblTransformer {
-        this._json.Invoice['cac:LegalMonetaryTotal'] = {
-            'cbc:LineExtensionAmount': {
-                $: {
-                    currencyID: this._document.currency,
-                },
-                _: this._document.subtotal,
-            },
-            'cbc:TaxExclusiveAmount': {
-                $: {
-                    currencyID: this._document.currency,
-                },
-                _: this._document.taxExclusiveAmount,
-            },
-            'cbc:TaxInclusiveAmount': {
-                $: {
-                    currencyID: this._document.currency,
-                },
-                _: this._document.totalAmount,
-            },
-            'cbc:AllowanceTotalAmount': {
-                $: {
-                    currencyID: this._document.currency,
-                },
-                _: this._document.descountTotalAmount,
-            },
-            'cbc:ChargeTotalAmount': {
-                $: {
-                    currencyID: this._document.currency,
-                },
-                _: this._document.chargeTotalAmount,
-            },
-            'cbc:PayableAmount': {
-                $: {
-                    currencyID: this._document.currency,
-                },
-                _: this._document.totalAmount,
-            },
-        };
-        return this;
-    }
-
-    public withItems(): InvoiceUblTransformer {
-        let i = 0;
-        for (const item of this._document.items) {
-            this._json.Invoice['cac:InvoiceLine'] = [
-                {
-                    'cbc:ID': ++i,
-                    'cbc:InvoicedQuantity': {
-                        $: {
-                            unitCode: item.um,
-                        },
-                        _: item.quantity,
-                    },
-                    'cbc:LineExtensionAmount': {
-                        $: {
-                            currencyID: this._document.currency,
-                        },
-                        _: item.totalPrice,
-                    },
-                    'cac:TaxTotal': {
                         'cbc:TaxAmount': {
                             $: {
                                 currencyID: this._document.currency,
                             },
                             _: item.tax.totalAmount,
                         },
-                        'cbc:RoundingAmount': {
-                            $: {
-                                currencyID: this._document.currency,
-                            },
-                            _: item.tax.roundingAmount,
-                        },
-                        'cac:TaxSubtotal': {
-                            'cbc:TaxableAmount': {
-                                $: {
-                                    currencyID: this._document.currency,
-                                },
-                                _: item.tax.baseAmount,
-                            },
-                            'cbc:TaxAmount': {
-                                $: {
-                                    currencyID: this._document.currency,
-                                },
-                                _: item.tax.totalAmount,
-                            },
-                            'cac:TaxCategory': {
-                                'cbc:Percent': item.tax.percent,
-                                'cac:TaxScheme': {
-                                    'cbc:ID': item.tax.code,
-                                    'cbc:Name': item.tax.name,
-                                },
+                        'cac:TaxCategory': {
+                            'cbc:Percent': item.tax.percent,
+                            'cac:TaxScheme': {
+                                'cbc:ID': item.tax.code,
+                                'cbc:Name': item.tax.name,
                             },
                         },
                     },
-                    'cac:Item': {
-                        'cbc:Description': item.note,
+                };
+                invoiceLine['cac:TaxTotal'] = tax;
+            }
+            invoiceLine['cac:Item'] = {
+                'cbc:Description': item.note,
+            };
+            invoiceLine['cac:Price'] = {
+                'cbc:PriceAmount': {
+                    $: {
+                        currencyID: this._document.currency,
                     },
-                    'cac:Price': {
-                        'cbc:PriceAmount': {
-                            $: {
-                                currencyID: this._document.currency,
-                            },
-                            _: item.totalPrice,
-                        },
-                        'cbc:BaseQuantity': {
-                            $: {
-                                unitCode: item.um,
-                            },
-                            _: item.quantity,
-                        },
-                    },
+                    _: item.totalPrice,
                 },
-            ];
+                'cbc:BaseQuantity': {
+                    $: {
+                        unitCode: item.um,
+                    },
+                    _: item.quantity,
+                }
+            };
+            this._json.Invoice['cac:InvoiceLine'].push(invoiceLine);
         }
-        return this;
-    }
-
-    public async toXml(): Promise<string> {
-        const builder = new xml2js.Builder({
-            xmldec: { version: '1.0', encoding: 'UTF-8', standalone: false },
-        });
-        this._xml = await builder.buildObject(this._json);
-        return this._xml;
     }
 }

@@ -181,7 +181,7 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
             .withTaxs(this.ROOT_TAG)
             .withTotals(this.ROOT_TAG);
         //Items CreditNoteLine
-        //TODO: Call method here
+        this.withItems();
         return this;
     }
 
@@ -259,7 +259,7 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
                         unitCode: item.um,
                     },
                     _: item.quantity,
-                }
+                },
             };
             this._json.CreditNote['cac:CreditNoteLine'].push(creditNoteLine);
         }

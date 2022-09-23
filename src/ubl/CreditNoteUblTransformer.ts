@@ -179,7 +179,7 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
             .withPaymethods(this.ROOT_TAG)
             .withTRM(this.ROOT_TAG)
             .withTaxs(this.ROOT_TAG)
-            .withTotals(this.ROOT_TAG)
+            .withTotals(this.ROOT_TAG);
         //Items CreditNoteLine
         //TODO: Call method here
         return this;
@@ -187,24 +187,81 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
 
     private withItems(): void {
         let i = 0;
+        this._json.CreditNote['cac:CreditNoteLine'] = [];
         for (const item of this._document.items) {
-            this._json.CreditNote['cac:CreditNoteLine'] = [
-                {
-                    'cbc:ID': ++i,
-                    'cbc:CreditedQuantity': {
-                        $: {
-                            'unitCode': this._utils.UNIT_CODE_CREDIT_NOTE
-                        },
-                        _: item.quantity
+            let creditNoteLine: any = {
+                'cbc:ID': ++i,
+                'cbc:CreditedQuantity': {
+                    $: {
+                        unitCode: this._utils.UNIT_CODE_CREDIT_NOTE,
                     },
-                    'cbc:LineExtensionAmount': {
+                    _: item.quantity,
+                },
+                'cbc:LineExtensionAmount': {
+                    $: {
+                        currencyID: this._document.currency,
+                    },
+                    _: item.totalPrice,
+                },
+                'cbc:FreeOfChargeIndicator': false,
+            };
+            //Tax
+            if (Object.keys(item.tax).length > 0) {
+                let tax: any = {
+                    'cbc:TaxAmount': {
                         $: {
                             currencyID: this._document.currency,
                         },
-                        _: item.totalPrice,
+                        _: item.tax.totalAmount,
                     },
+                    'cbc:RoundingAmount': {
+                        $: {
+                            currencyID: this._document.currency,
+                        },
+                        _: item.tax.roundingAmount,
+                    },
+                    'cac:TaxSubtotal': {
+                        'cbc:TaxableAmount': {
+                            $: {
+                                currencyID: this._document.currency,
+                            },
+                            _: item.tax.baseAmount,
+                        },
+                        'cbc:TaxAmount': {
+                            $: {
+                                currencyID: this._document.currency,
+                            },
+                            _: item.tax.totalAmount,
+                        },
+                        'cac:TaxCategory': {
+                            'cbc:Percent': item.tax.percent,
+                            'cac:TaxScheme': {
+                                'cbc:ID': item.tax.code,
+                                'cbc:Name': item.tax.name,
+                            },
+                        },
+                    },
+                };
+                creditNoteLine['cac:TaxTotal'] = tax;
+            }
+            creditNoteLine['cac:Item'] = {
+                'cbc:Description': item.note,
+            };
+            creditNoteLine['cac:Price'] = {
+                'cbc:PriceAmount': {
+                    $: {
+                        currencyID: this._document.currency,
+                    },
+                    _: item.totalPrice,
+                },
+                'cbc:BaseQuantity': {
+                    $: {
+                        unitCode: item.um,
+                    },
+                    _: item.quantity,
                 }
-            ];
+            };
+            this._json.CreditNote['cac:CreditNoteLine'].push(creditNoteLine);
         }
     }
 }

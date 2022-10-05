@@ -17,6 +17,8 @@ export interface IFiscalDocument extends IFiscalDocumentCreditAndDebitNote {
     totalAmount: number;
     //Tipo de documento 01=Factura 94=Nota Débito 95=Nota crédito
     invoiceTypeCode: string;
+    //Tipo de documento carvajal => INVOIC | ND | NC
+    carvajalInvoiceTypeCode: string;
     //Tipo de factura 10= Factura estandar
     customizationID: string;
     //Sumatoria del los subtotales a nivel de items que tengan el impuesto IVA

@@ -15,6 +15,13 @@ export class Utils {
     public LANGUAJE_ID = "es";
     public UNIT_CODE_CREDIT_NOTE = 'NIU';
 
+    //Carvajal
+    public INVOICE_CODE = 'INVOIC';
+    public CREDIT_NOTE_CODE = 'NC';
+    public DIAN_INVOICE = 'DIAN 2.1: Factura Electrónica de Venta';
+    public DIAN_CREDIT_NOTE = 'DIAN 2.1: Nota Crédito de Factura Electrónica de Venta';
+    public DIAN_DEBIT_NOTE = 'DIAN 2.1: Nota Débito de Factura Electrónica de Venta';
+
     constructor() {
 
     }
@@ -77,6 +84,16 @@ export class Utils {
         ;
     }
 
+    public getDianVersion(documentCode: string): string {
+        if (this.INVOICE_CODE === documentCode) {
+            return this.DIAN_INVOICE;
+        }
+        if (this.CREDIT_NOTE_CODE === documentCode) {
+            return this.DIAN_CREDIT_NOTE;
+        }
+        return this.DIAN_DEBIT_NOTE;
+    }
+
     private padTo2Digits(num: number): string {
         return num.toString().padStart(2, '0');
     }
@@ -111,5 +128,18 @@ export class Utils {
             this.padTo2Digits(date.getSeconds()),
         ];
         return format.join(':') + GTM;
+    }
+
+    public formatDateRange(date: Date, rangeValue: number): string {
+        const format = [
+            //Get year
+            this.padTo2Digits(date.getFullYear()),
+            //Get month
+            this.padTo2Digits(date.getMonth() + 1),
+            //Get day
+            this.padTo2Digits(rangeValue),
+        ];
+        return format.join('-'); 
+
     }
 }

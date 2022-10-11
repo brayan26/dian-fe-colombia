@@ -62,7 +62,11 @@ export class CarvajalInvoiceTransformer extends CarvajalXmlBuildFactory implemen
         };
         this.withSupplier(this.ROOT_TAG)
         .withFiscalAddress(this.ROOT_TAG)
-        .withCustomer(this.ROOT_TAG);
+        .withCustomer(this.ROOT_TAG)
+        .withTotals(this.ROOT_TAG)
+        .withResolution(this.ROOT_TAG)
+        .withPayMethod(this.ROOT_TAG);
+        
         return this;
     }
 

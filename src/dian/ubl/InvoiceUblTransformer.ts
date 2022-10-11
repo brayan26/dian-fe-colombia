@@ -1,43 +1,62 @@
-import { IFiscalDocument, ICompany, Ubl } from '../dian/IFiscalDocument';
+import { IFiscalDocument, ICompany, Ubl } from '../IFiscalDocument';
 import { UblBuildFactory } from './UblBuildFactory';
 
-export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
-    private ROOT_TAG = 'CreditNote';
+export class InvoiceUblTransformer extends UblBuildFactory implements Ubl {
+    private ROOT_TAG = 'Invoice';
 
     constructor(document: IFiscalDocument, company: ICompany) {
         super(document, company);
     }
 
-    public async mapToUbl(): Promise<CreditNoteUblTransformer> {
-        const cude = await this._utils.getCudeSha384(
+    public async mapToUbl(): Promise<InvoiceUblTransformer> {
+        const cufe = await this._utils.getCufeSha384(
             this._document,
             this._company
         );
         const environment = `${this._company.testMode ? 2 : 1}`;
         this._json = {
-            CreditNote: {
+            //root
+            Invoice: {
                 $: {
-                    xmlns: 'urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2',
+                    xmlns: 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
                     'xmlns:cac':
                         'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
                     'xmlns:cbc':
                         'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
-                    'xmlns:ds': 'http://www.w3.org/2000/09/xmldsig#',
                     'xmlns:ext':
                         'urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2',
                     'xmlns:sts':
                         'dian:gov:co:facturaelectronica:Structures-2-1',
                     'xmlns:xades': 'http://uri.etsi.org/01903/v1.3.2#',
                     'xmlns:xades141': 'http://uri.etsi.org/01903/v1.4.1#',
+                    'xmlns:ds': 'http://www.w3.org/2000/09/xmldsig#',
                     'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
                     'xsi:schemaLocation':
-                        'urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2     http://docs.oasis-open.org/ubl/os-UBL-2.1/xsd/maindoc/UBL-CreditNote-2.1.xsd',
+                        'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2     http://docs.oasis-open.org/ubl/os-UBL-2.1/xsd/maindoc/UBL-Invoice-2.1.xsd',
                 },
                 'ext:UBLExtensions': {
                     'ext:UBLExtension': [
                         {
                             'ext:ExtensionContent': {
                                 'sts:DianExtensions': {
+                                    'sts:InvoiceControl': {
+                                        'sts:InvoiceAuthorization':
+                                            this._document.pos.resolution,
+                                        'sts:AuthorizationPeriod': {
+                                            'cbc:StartDate':
+                                                this._document.pos.startDate,
+                                            'cbc:EndDate':
+                                                this._document.pos.endDate,
+                                        },
+                                        'sts:AuthorizedInvoices': {
+                                            'sts:Prefix':
+                                                this._document.pos.prefix,
+                                            'sts:From':
+                                                this._document.pos.rangeFrom,
+                                            'sts:To':
+                                                this._document.pos.rangeTo,
+                                        },
+                                    },
                                     'sts:InvoiceSource': {
                                         'cbc:IdentificationCode': {
                                             $: {
@@ -106,7 +125,7 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
                                         },
                                     },
                                     'sts:QRCode': this._utils.getQRCode(
-                                        cude,
+                                        cufe,
                                         this._company
                                     ),
                                 },
@@ -120,18 +139,17 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
                 },
                 'cbc:UBLVersionID': this._utils.UBL_VERSION,
                 'cbc:CustomizationID': this._utils.INVOICE_TYPE,
-                'cbc:ProfileID':
-                    'DIAN 2.1: Nota Crédito de Factura Electrónica de Venta',
+                'cbc:ProfileID': 'DIAN 2.1: Factura Electrónica de Venta',
                 'cbc:ProfileExecutionID': environment,
                 'cbc:ID': `${
-                    this._document.pos.prefix + this._document.invoiceNumber
+                    this._document.pos.prefix + this._document.internalId
                 }`,
                 'cbc:UUID': {
                     $: {
                         schemeID: environment,
-                        schemeName: 'CUDE-SHA384',
+                        schemeName: 'CUFE-SHA384',
                     },
-                    _: cude,
+                    _: cufe,
                 },
                 'cbc:IssueDate': this._utils.formatDate(
                     this._document.invoiceDate,
@@ -141,69 +159,45 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
                     this._document.invoiceDate,
                     false
                 ),
-                'cbc:CreditNoteTypeCode': this._document.invoiceTypeCode,
-                'cbc:Note': this._document.note,
-                'cbc:DocumentCurrencyCode': {
-                    $: {
-                        listAgencyID: '6',
-                        listID: 'Peso colombiano',
-                    },
-                    _: this._document.currency,
-                },
+                'cbc:DueDate': this._document.paymentDueDate,
+                'cbc:InvoiceTypeCode': this._document.invoiceType,
+                'cbc:Note': '',//this._document.note,
+                'cbc:DocumentCurrencyCode': this._document.currency,
                 'cbc:LineCountNumeric': this._document.items.length,
-                'cac:DiscrepancyResponse': {
-                    'cbc:ReferenceID': this._document.relatedInvoice,
-                    'cbc:ResponseCode': this._document.typeNote,
-                    'cbc:Description': this._document.descriptionTypeNote,
-                },
-                'cac:BillingReference': {
-                    'cac:InvoiceDocumentReference': {
-                        'cbc:ID': this._document.relatedInvoice,
-                        'cbc:UUID': {
-                            $: {
-                                schemeName: 'CUFE-SHA384',
-                            },
-                            _: this._document.relatedCufe,
-                        },
-                        'cbc:IssueDate': this._utils.formatDate(
-                            this._document.relatedInvoiceDate,
-                            true
-                        ),
-                    },
-                },
             },
         };
+
         //Parent methods
         this.withSupplier(this.ROOT_TAG)
             .withCustomer(this.ROOT_TAG)
+            .withFiscalRepresentative(this.ROOT_TAG)
             .withPaymethods(this.ROOT_TAG)
             .withTRM(this.ROOT_TAG)
             .withTaxs(this.ROOT_TAG)
             .withTotals(this.ROOT_TAG);
-        //Items CreditNoteLine
+        //Items InvoiceLine
         this.withItems();
         return this;
     }
 
     private withItems(): void {
         let i = 0;
-        this._json.CreditNote['cac:CreditNoteLine'] = [];
+        this._json.Invoice['cac:InvoiceLine'] = [];
         for (const item of this._document.items) {
-            let creditNoteLine: any = {
+            let invoiceLine: any = {
                 'cbc:ID': ++i,
-                'cbc:CreditedQuantity': {
+                'cbc:InvoicedQuantity': {
                     $: {
-                        unitCode: this._utils.UNIT_CODE_CREDIT_NOTE,
+                        unitCode: item.um,
                     },
-                    _: item.quantity,
+                    _: item.qty,
                 },
                 'cbc:LineExtensionAmount': {
                     $: {
                         currencyID: this._document.currency,
                     },
                     _: item.totalPrice,
-                },
-                'cbc:FreeOfChargeIndicator': false,
+                }
             };
             //Tax
             if (Object.keys(item.tax).length > 0) {
@@ -212,13 +206,13 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
                         $: {
                             currencyID: this._document.currency,
                         },
-                        _: item.tax.totalAmount,
+                        _: item.tax.amount,
                     },
                     'cbc:RoundingAmount': {
                         $: {
                             currencyID: this._document.currency,
                         },
-                        _: item.tax.roundingAmount,
+                        _: '0.00',//item.tax.roundingAmount,
                     },
                     'cac:TaxSubtotal': {
                         'cbc:TaxableAmount': {
@@ -231,10 +225,10 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
                             $: {
                                 currencyID: this._document.currency,
                             },
-                            _: item.tax.totalAmount,
+                            _: item.tax.amount,
                         },
                         'cac:TaxCategory': {
-                            'cbc:Percent': item.tax.percent,
+                            'cbc:Percent': '0.00',//item.tax.percent,
                             'cac:TaxScheme': {
                                 'cbc:ID': item.tax.code,
                                 'cbc:Name': item.tax.name,
@@ -242,12 +236,12 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
                         },
                     },
                 };
-                creditNoteLine['cac:TaxTotal'] = tax;
+                invoiceLine['cac:TaxTotal'] = tax;
             }
-            creditNoteLine['cac:Item'] = {
-                'cbc:Description': item.note,
+            invoiceLine['cac:Item'] = {
+                'cbc:Description': item.name,
             };
-            creditNoteLine['cac:Price'] = {
+            invoiceLine['cac:Price'] = {
                 'cbc:PriceAmount': {
                     $: {
                         currencyID: this._document.currency,
@@ -258,10 +252,10 @@ export class CreditNoteUblTransformer extends UblBuildFactory implements Ubl {
                     $: {
                         unitCode: item.um,
                     },
-                    _: item.quantity,
-                },
+                    _: item.qty,
+                }
             };
-            this._json.CreditNote['cac:CreditNoteLine'].push(creditNoteLine);
+            this._json.Invoice['cac:InvoiceLine'].push(invoiceLine);
         }
     }
 }

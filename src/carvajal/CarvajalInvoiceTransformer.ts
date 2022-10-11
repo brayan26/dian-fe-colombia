@@ -18,13 +18,13 @@ export class CarvajalInvoiceTransformer extends CarvajalXmlBuildFactory implemen
         this._json = {
             FACTURA: {
                 ENC: {
-                    ENC_1: this._document.carvajalInvoiceTypeCode,
+                    //ENC_1: this._document.carvajalInvoiceTypeCode,
                     ENC_2: this._company.identificationNumber,
-                    ENC_3: this._document.customer.idCustomer,
+                    ENC_3: this._document.customer.identificationNumber,
                     ENC_4: this._utils.UBL_VERSION,
-                    ENC_5: this._utils.getDianVersion(this._document.invoiceTypeCode),
+                    ENC_5: this._utils.getDianVersion(this._document.invoiceType),
                     ENC_6: `${
-                        this._document.pos.prefix + this._document.invoiceNumber
+                        this._document.pos.prefix + this._document.internalId
                     }`,
                     //Fecha de la factura
                     ENC_7: this._utils.formatDate(
@@ -37,7 +37,7 @@ export class CarvajalInvoiceTransformer extends CarvajalXmlBuildFactory implemen
                         false
                     ),
                     //Tipo de documento DIAN
-                    ENC_9: this._document.invoiceTypeCode,
+                    ENC_9: this._document.invoiceType,
                     ENC_10: this._document.currency,
                     //Rango de fecha del periodo de facturación
                     ENC_11: this._utils.formatDateRange(this._document.invoiceDate, 1),
@@ -45,7 +45,7 @@ export class CarvajalInvoiceTransformer extends CarvajalXmlBuildFactory implemen
                     //ENC_13: '',
                     //ENC_14: '',
                     ENC_15: this._document.items.length,
-                    ENC_16: this._document.dueDate,
+                    ENC_16: this._document.paymentDueDate,
                     //URL para enviar archivos anexos
                     //ENC_17: '',
                     //ENC_18: '',

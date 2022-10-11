@@ -1,6 +1,6 @@
-import { IFiscalDocument, ICompany, Ubl } from '../dian/IFiscalDocument';
+import { IFiscalDocument, ICompany } from '../IFiscalDocument';
 const xml2js = require('xml2js');
-import { Utils } from '../dian/Utils';
+import { Utils } from '../Utils';
 
 export class UblBuildFactory {
     _json: any;
@@ -106,19 +106,19 @@ export class UblBuildFactory {
             'cbc:AdditionalAccountID': this._document.customer.entityType,
             'cac:Party': {
                 'cac:PartyIdentification': {
-                    'cbc:ID': this._document.customer.idCustomer,
+                    'cbc:ID': this._document.customer.identificationNumber,
                 },
                 'cac:PartyName': {
-                    'cbc:Name': this._document.customer.name,
+                    'cbc:Name': this._document.customer.businessName,
                 },
                 'cac:PhysicalLocation': {
                     'cac:Address': {
-                        'cbc:ID': this._document.customer.cityCode,
-                        'cbc:CityName': this._document.customer.cityName,
+                        'cbc:ID': this._document.customer.city,
+                        'cbc:CityName': this._document.customer.city,
                         'cbc:CountrySubentity':
-                            this._document.customer.departmentName,
+                            this._document.customer.state,
                         'cbc:CountrySubentityCode':
-                            this._document.customer.departmentCode,
+                            this._document.customer.state,
                         'cac:AddressLine': {
                             'cbc:Line': this._document.customer.fiscalAddress,
                         },
@@ -134,44 +134,44 @@ export class UblBuildFactory {
                     },
                 },
                 'cac:PartyTaxScheme': {
-                    'cbc:RegistrationName': this._document.customer.name,
+                    'cbc:RegistrationName': this._document.customer.businessName,
                     'cbc:CompanyID': {
                         $: {
                             schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
                             schemeAgencyName: this._utils.SCHEMA_AGENCY_NAME,
-                            schemeID: this._document.customer.dvNit,
+                            schemeID: '',//this._document.customer.dvNit,
                             schemeName: this._document.customer.documentType,
                         },
-                        _: this._document.customer.idCustomer,
+                        _: this._document.customer.identificationNumber,
                     },
-                    'cbc:TaxLevelCode': this._document.customer.taxLevelCode
+                    'cbc:TaxLevelCode': 'R-99-N',/*this._document.customer.taxLevelCode
                         ? this._document.customer.taxLevelCode
-                        : 'R-99-PN',
+                        : 'R-99-PN',*/
                     'cac:TaxScheme': {
-                        'cbc:ID': this._document.customer.taxId
-                            ? this._document.customer.taxId
+                        'cbc:ID': this._document.customer.taxCategory
+                            ? this._document.customer.taxCategory
                             : 'ZZ',
-                        'cbc:Name': this._document.customer.taxName
-                            ? this._document.customer.taxName
+                        'cbc:Name': this._document.customer.taxCategory
+                            ? this._document.customer.taxCategory
                             : 'No Aplica',
                     },
                 },
                 'cac:PartyLegalEntity': {
-                    'cbc:RegistrationName': this._document.customer.name,
+                    'cbc:RegistrationName': this._document.customer.identificationNumber,
                     'cbc:CompanyID': {
                         $: {
                             schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
                             schemeAgencyName: this._utils.SCHEMA_AGENCY_NAME,
-                            schemeID: this._document.customer.dvNit,
+                            schemeID: '0', //this._document.customer.dvNit,
                             schemeName: this._document.customer.documentType,
                         },
-                        _: this._document.customer.idCustomer,
+                        _: this._document.customer.identificationNumber,
                     },
                 },
                 'cac:Contact': {
-                    'cbc:Telephone': this._document.customer.contactPhone,
-                    'cbc:ElectronicMail':
-                        this._document.customer.contactElectronicMail,
+                    'cbc:Telephone': '3040773',//this._document.customer.contactPhone,
+                    'cbc:ElectronicMail': ''
+                        //this._document.customer.contactElectronicMail,
                 },
             },
         };
@@ -185,13 +185,13 @@ export class UblBuildFactory {
                     $: {
                         schemeAgencyID: this._utils.SCHEMA_AGENCY_ID,
                         schemeAgencyName: this._utils.SCHEMA_AGENCY_NAME,
-                        schemeID: this._document.customer.dvNit,
+                        schemeID: '0',//this._document.customer.dvNit,
                         schemeName: this._document.customer.documentType,
                     },
-                    _: this._document.customer.idCustomer,
+                    _: this._document.customer.identificationNumber,
                 },
                 'cac:PartyName': {
-                    'cbc:Name': this._document.customer.name,
+                    'cbc:Name': this._document.customer.businessName,
                 },
             },
         };
@@ -206,13 +206,13 @@ export class UblBuildFactory {
                         $: {
                             currencyID: this._document.currency,
                         },
-                        _: tax.totalAmount,
+                        _: tax.amount,
                     },
                     'cbc:RoundingAmount': {
                         $: {
                             currencyID: this._document.currency,
                         },
-                        _: tax.roundingAmount,
+                        _: '0.00', //tax.roundingAmount,
                     },
                     'cac:TaxSubtotal': {
                         'cbc:TaxableAmount': {
@@ -225,10 +225,10 @@ export class UblBuildFactory {
                             $: {
                                 currencyID: this._document.currency,
                             },
-                            _: tax.totalAmount,
+                            _: tax.amount,
                         },
                         'cac:TaxCategory': {
-                            'cbc:Percent': tax.percent,
+                            'cbc:Percent': '0.00', //tax.percent,
                             'cac:TaxScheme': {
                                 'cbc:ID': tax.code,
                                 'cbc:Name': tax.name,
@@ -246,9 +246,9 @@ export class UblBuildFactory {
         for (const paymentMethod of this._document.paymentMethods) {
             this._json[key]['cac:PaymentMeans'] = [
                 {
-                    'cbc:ID': paymentMethod.paymentType,
+                    'cbc:ID': '2',
                     'cbc:PaymentMeansCode': paymentMethod.code,
-                    'cbc:PaymentDueDate': paymentMethod.dueDate,
+                    'cbc:PaymentDueDate': this._document.paymentDueDate,
                     'cbc:PaymentID': ++i,
                 },
             ];
@@ -277,13 +277,13 @@ export class UblBuildFactory {
                 $: {
                     currencyID: this._document.currency,
                 },
-                _: this._document.subtotal,
+                _: this._document.subtotalAmount,
             },
             'cbc:TaxExclusiveAmount': {
                 $: {
                     currencyID: this._document.currency,
                 },
-                _: this._document.taxExclusiveAmount,
+                _: this._document.taxedAmount,
             },
             'cbc:TaxInclusiveAmount': {
                 $: {
@@ -295,13 +295,13 @@ export class UblBuildFactory {
                 $: {
                     currencyID: this._document.currency,
                 },
-                _: this._document.descountTotalAmount,
+                _: this._document.ticketDiscount,
             },
             'cbc:ChargeTotalAmount': {
                 $: {
                     currencyID: this._document.currency,
                 },
-                _: this._document.chargeTotalAmount,
+                _: '0.00',
             },
             'cbc:PayableAmount': {
                 $: {

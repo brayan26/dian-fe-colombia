@@ -1,81 +1,84 @@
 export interface IFiscalDocument extends IFiscalDocumentCreditAndDebitNote {
     //Numero de comprobante
-    invoiceNumber: number;
-    //Fecha y hora de emision de la factura
-    invoiceDate: Date;
-    //Fecha de vencimiento
-    dueDate: string;
-    //Notas o cualquier obervacion de la factura
-    note: string;
+    internalId: number;
+    //Tipo de documento 01=Factura 94=Nota Débito 95=Nota crédito
+    invoiceType: string;
     //COP
     currency: string;
+    //Cotizacion de la moneda informada
+    currencyChange: number;
+    //Fecha y hora de emision de la factura
+    invoiceDate: Date;
+    //Fecha de vencimiento del pago de la factura
+    paymentDueDate: Date;
+    //Perido en el que se realiza la factura
+    periodStartDate: Date;
+    //Perido en el que se realiza la factura
+    periodEndDate: Date;
     //Subtotal general del documento
-    subtotal: number;
+    subtotalAmount: number;
+    //Descuento total de la factura
+    ticketDiscount: number;
+    //Importe conceptos no gravados
+    nonTaxedAmount: number;
+    //Importe neto gravado del documento
+    taxedAmount: number;
     //Total general del impuesto IVA
     amountIVA: number;
     //Total general del documento => subtotal + amountIVA + chargeTotalAmount - descountTotalAmount
     totalAmount: number;
-    //Tipo de documento 01=Factura 94=Nota Débito 95=Nota crédito
-    invoiceTypeCode: string;
-    //Tipo de documento carvajal => INVOIC | ND | NC
-    carvajalInvoiceTypeCode: string;
-    //Tipo de factura 10= Factura estandar
-    customizationID: string;
-    //Sumatoria del los subtotales a nivel de items que tengan el impuesto IVA
-    taxExclusiveAmount: number;
-    //Valor total de descuentos en la factura
-    descountTotalAmount: number;
-    //Valor total de recargos a la factura
-    chargeTotalAmount: number;
-    //Identificacioni del pedido
-    orderReference?: IFiscalDocumentOrderReference;
+    //Numero del pedido
+    orderNumber: number;
+    //Código del vendedor
+    operator: string;
+    //Periodo de facturación ideal para notas
+    relatedInvoice: IFiscalDocumentRelatedInvoicesPeriod[];
     //Cliente
     customer: IFiscalDocumentCustomer;
-    //Tasa representativa del mercado
-    trm?: IFiscalDocumentTRM;
     //Medios de pago
     paymentMethods: IFiscalDocumentPaymentMethods[];
     //Impuestos del documento
     relatedTaxes: IFiscalDocumentRelatedTaxes[];
+    //Otros Impuestos del documento como retenciones, ReteFuente, ICA, Imp. Bolsa, etc.
+    relatedOtherTaxes: IFiscalDocumentRelatedTaxes[];
     //Resolucion de facturación
     pos: IFiscalDocumentPos;
     //Articulos del documento
     items: IFiscalDocumentItems[];
+    //
+    orderReference?: IFiscalDocumentOrderReference;
+    /** Estos son los que faltan */
+    //Notas o cualquier obervacion de la factura
+    //note: string;
+    //Tipo de documento carvajal => INVOIC | ND | NC
+    //carvajalInvoiceTypeCode: string;
+    //Tipo de factura 10= Factura estandar, Si solo se realizaran facturas estandar que es lo mas común este dato puede ser una constante
+    //customizationID: string;
+    //Valor total de recargos a la factura
+    //chargeTotalAmount: number;
 }
 
 interface IFiscalDocumentCustomer {
-    entityType: number;
-    idCustomer: string;
     documentType: string;
-    dvNit: string;
-    name: string;
-    departmentCode: string;
-    departmentName: string;
-    cityCode: string;
-    cityName: string;
+    identificationNumber: string;
+    entityType: number;
+    taxCategory: string;
+    sendVoucher: boolean;
+    billingEmail: string;
+    personalEmail: string;
+    code: string;
+    businessName: string;
+    civilStatus: string;
     fiscalAddress: string;
-    countryCode: string;
-    countryName: string;
+    city: string;
+    state: string;
     postalCode: string;
-    taxLevelCode: string;
-    contactPhone: string;
-    contactElectronicMail: string;
-    taxId?: string;
-    taxName?: string;
+    /** Estos son los que faltan */
+    //dv: string;
+    //country: string;
+    //contactPhone: string;
 }
 
-//Informacion referente a la tasa de cambio de la factura con respecto a una moneda extrangera
-//TRM: Tasa representativa del mercado
-interface IFiscalDocumentTRM {
-    //Codigo de la moneda extranjera
-    targetCurrencyCode: string;
-    //Cantidad base para el calculo de la TRM, por defecto => 1.00
-    targetCurrencyBaseRate: number;
-    //Valor de la TRM del dia en el que se realizo la factura
-    calculationRate: number;
-    //Fecha del dia de la TRM por defecto la fecha en la que se realizó la factura
-    date: string;
-}
 
 interface IFiscalDocumentOrderReference {
     //Numero de la orden de compra
@@ -85,21 +88,29 @@ interface IFiscalDocumentOrderReference {
 }
 
 interface IFiscalDocumentPaymentMethods {
-    paymentType: number;
-    code: String;
-    dueDate: Date;
-    identificationPayment: String;
+    code: string;
+    name: string;
+    amount: number;
+    /** Los que faltan */
+    //paymentType: number;
+    //identificationPayment: String;
+    //dueDate: Date;
+}
+
+interface IFiscalDocumentRelatedInvoicesPeriod {
+    startDate: Date;
+    endDate: Date;
 }
 
 interface IFiscalDocumentRelatedTaxes {
-    totalAmount: number;
-    roundingAmount: number;
+    //totalAmount: number;
+    //roundingAmount: number;
     baseAmount: number;
     amount: number;
-    baseUnitMeasure: number;
-    measurementunit: string;
-    perUnitAmount: number;
-    percent: number;
+    //baseUnitMeasure: number;
+    //measurementunit: string;
+    //perUnitAmount: number;
+    //percent: number;
     code: string;
     name: string;
 }
@@ -115,13 +126,18 @@ interface IFiscalDocumentPos {
 }
 
 interface IFiscalDocumentItems {
-    item: number;
-    concept: number;
-    note: String;
-    um: String;
-    totalPrice: number;
-    quantity: number;
+    action: string;
+    sku: string;
+    name: string;
+    qty: number;
+    um?: string;
     tax: IFiscalDocumentRelatedTaxes;
+    taxAmount: number;
+    discount: number;
+    unitPrice: number;
+    totalPrice: number;
+    serialNumber?: string;
+    code?: string;
 }
 
 export interface ICompany {
@@ -177,9 +193,9 @@ export interface Ubl {
 }
 
 interface IFiscalDocumentCreditAndDebitNote {
+    /** Atributos que faltan para las notas de crédito y débito */
     typeNote?: string;
     descriptionTypeNote?: string;
-    relatedInvoice?: string;
-    relatedCufe: string;
-    relatedInvoiceDate: Date;
+    relatedCufe?: string;
+    relatedInvoiceDate?: Date;
 }

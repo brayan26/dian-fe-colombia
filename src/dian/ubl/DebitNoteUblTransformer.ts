@@ -1,4 +1,4 @@
-import { IFiscalDocument, ICompany, Ubl } from '../dian/IFiscalDocument';
+import { IFiscalDocument, ICompany, Ubl } from '../IFiscalDocument';
 import { UblBuildFactory } from './UblBuildFactory';
 
 export class DebitNoteUblTransformer extends UblBuildFactory implements Ubl {
@@ -125,7 +125,7 @@ export class DebitNoteUblTransformer extends UblBuildFactory implements Ubl {
                     'DIAN 2.1: Nota Crédito de Factura Electrónica de Venta',
                 'cbc:ProfileExecutionID': environment,
                 'cbc:ID': `${
-                    this._document.pos.prefix + this._document.invoiceNumber
+                    this._document.pos.prefix + this._document.internalId
                 }`,
                 'cbc:UUID': {
                     $: {
@@ -142,8 +142,8 @@ export class DebitNoteUblTransformer extends UblBuildFactory implements Ubl {
                     this._document.invoiceDate,
                     false
                 ),
-                'cbc:CreditNoteTypeCode': this._document.invoiceTypeCode,
-                'cbc:Note': this._document.note,
+                'cbc:CreditNoteTypeCode': this._document.invoiceType,
+                'cbc:Note': '', //this._document.note,
                 'cbc:DocumentCurrencyCode': {
                     $: {
                         listAgencyID: '6',
@@ -167,7 +167,7 @@ export class DebitNoteUblTransformer extends UblBuildFactory implements Ubl {
                             _: this._document.relatedCufe,
                         },
                         'cbc:IssueDate': this._utils.formatDate(
-                            this._document.relatedInvoiceDate,
+                            this._document.relatedInvoiceDate || new Date(),
                             true
                         ),
                     },

@@ -56,30 +56,30 @@ export class CarvajalXmlBuildFactory {
         this._json[key]['ADQ'] = {
             //Nota: Se debe informar el código “2” cuando se trate de informar al consumidor final.
             ADQ_1: this._document.customer.entityType,
-            ADQ_2: this._document.customer.idCustomer,
+            ADQ_2: this._document.customer.identificationNumber,
             ADQ_3: this._document.customer.documentType,
             //Regimen al que pertenece el cliente
             ADQ_4: 'No aplica',
             //Número de identificación interno asignado por el proveedor
             //ADQ_5: '',
-            ADQ_6: `${this._document.customer.entityType == 2 ? 'Consumidor final': this._document.customer.name}`,
-            ADQ_7: this._document.customer.name,
+            ADQ_6: `${this._document.customer.entityType == 2 ? 'Consumidor final': this._document.customer.businessName}`,
+            ADQ_7: this._document.customer.businessName,
             //Si es persona natural se debe expresar los nombres
             //ADQ_8: this._document.customer.name,
             //Si es persona natural se debe expresar los apellidos
             //ADQ_9: this._document.customer.name,
             ADQ_10: this._document.customer.fiscalAddress,
-            ADQ_11: this._document.customer.departmentCode,
-            ADQ_13: this._document.customer.cityName,
+            ADQ_11: this._document.customer.state,
+            ADQ_13: this._document.customer.city,
             ADQ_14: this._document.customer.postalCode,
-            ADQ_15: this._document.customer.countryCode,
-            ADQ_19: this._document.customer.departmentName,
-            ADQ_21: this._document.customer.countryName,
-            ADQ_22: this._document.customer.dvNit,
-            ADQ_23: this._document.customer.cityCode,
-            ADQ_24: this._document.customer.idCustomer,
+            //ADQ_15: this._document.customer.country,
+            ADQ_19: this._document.customer.state,
+            //ADQ_21: this._document.customer.country,
+            //ADQ_22: this._document.customer.dvNit,
+            ADQ_23: this._document.customer.city,
+            ADQ_24: this._document.customer.identificationNumber,
             ADQ_25: this._document.customer.documentType,
-            ADQ_26: this._document.customer.dvNit,
+            //ADQ_26: this._document.customer.dvNit,
         };
         return this;
     };

@@ -41,7 +41,7 @@ export class Utils {
     }
 
     public async getSoftwareSecurityCode(document: IFiscalDocument, company: ICompany ): Promise<string> {
-        const input = company.softwareID + company.pinCode + document.pos.prefix + document.invoiceNumber;
+        const input = company.softwareID + company.pinCode + document.pos.prefix + document.internalId;
         const sha384 = crypto.createHash('sha384');
         const hash = sha384.update(input, 'utf-8');
         return hash.digest('hex');
@@ -66,19 +66,19 @@ export class Utils {
 
         //Create string
         return document.pos.prefix 
-            + document.invoiceNumber 
+            + document.internalId 
             + this.formatDate(document.invoiceDate, true)
             + this.formatDate(document.invoiceDate, false)
-            + document.subtotal
+            + document.subtotalAmount
             + `${tax01?.code || '01'}`
             + document.amountIVA
             + `${tax04?.code || '04'}`
-            + `${tax04?.totalAmount || '0.00'}`
+            + `${tax04?.amount || '0.00'}`
             + `${tax03?.code || '03'}`
-            + `${tax03?.totalAmount || '0.00'}`
+            + `${tax03?.amount || '0.00'}`
             + document.totalAmount
             + company.identificationNumber
-            + document.customer.idCustomer
+            + document.customer.identificationNumber
             + `${this.CUFE === type ? document.pos.technicalKey: company.pinCode}`
             + `${company.testMode ? 2 : 1}`
         ;

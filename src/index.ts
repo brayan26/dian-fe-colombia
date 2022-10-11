@@ -1,5 +1,5 @@
 import { IFiscalDocument, ICompany } from './dian/IFiscalDocument';
-import { UblFactory } from './ubl/UblFactory';
+import { CarvajalUblFactory } from './carvajal/CarvajalUblFactory';
 
 const company: ICompany = {
     identificationNumber: '900668729',
@@ -28,40 +28,42 @@ const company: ICompany = {
 };
 
 const document: IFiscalDocument = {
-    invoiceNumber: 1,
-    invoiceDate: new Date(),
-    dueDate: '2022-09-30',
-    note: 'Any note',
+    internalId: 1,
+    invoiceType: 'INVOIC',
     currency: 'COP',
-    subtotal: 0.0,
-    amountIVA: 0.0,
-    totalAmount: 0.0,
-    invoiceTypeCode: '01',
-    customizationID: '10',
-    taxExclusiveAmount: 0.0,
-    descountTotalAmount: 0.0,
-    chargeTotalAmount: 0.0,
+    currencyChange: 1.00,
+    invoiceDate: new Date(),
+    paymentDueDate: new Date(),
+    periodStartDate: new Date(),
+    periodEndDate: new Date(),
+    subtotalAmount: 0,
+    ticketDiscount: 0,
+    nonTaxedAmount: 0,
+    taxedAmount: 0,
+    amountIVA: 0,
+    totalAmount: 0,
+    orderNumber: 0,
+    operator: '',
+    relatedInvoice: [],
     customer: {
-        entityType: 2,
-        idCustomer: '1046274165',
         documentType: '31',
-        dvNit: '0',
-        name: 'JULIO SARMIENTO PEÑA',
-        departmentCode: '08',
-        departmentName: 'ATLANTICO',
-        cityCode: '08001',
-        cityName: 'BARRANQUILLA',
-        fiscalAddress: 'CL 36B 20 81',
-        countryCode: 'CO',
-        countryName: 'COLOMBIA',
-        postalCode: '080005',
-        taxLevelCode: 'R-99-PN',
-        contactPhone: '3017611414',
-        contactElectronicMail: 'test@gmail.com',
+        identificationNumber: '1046274165',
+        entityType: 1,
+        taxCategory: '01',
+        sendVoucher: true,
+        billingEmail: 'brayanpp2697@gmail.com',
+        personalEmail: 'brayanpp2697@gmail.com',
+        code: '002563',
+        businessName: 'JULIO SARMIENTO PEÑA',
+        civilStatus: 'SOLTERO',
+        fiscalAddress: 'CALLE 36B 20 81',
+        city: 'BARRANQUILLA',
+        state: 'ATLANTICO',
+        postalCode: '080006',
     },
-    trm: undefined,
     paymentMethods: [],
     relatedTaxes: [],
+    relatedOtherTaxes: [],
     pos: {
         prefix: 'INV',
         resolution: '18000683498704',
@@ -71,31 +73,13 @@ const document: IFiscalDocument = {
         startDate: '2022-09-12',
         endDate: '2023-09-12',
     },
-    items: [{
-        item: 12,
-        concept: 1,
-        note: 'PRODUCTO DE PRUEBA',
-        um: 'UND',
-        totalPrice: 100000.00,
-        quantity: 1,
-        tax: {
-            totalAmount: 19000.00,
-            roundingAmount: 0.00,
-            baseAmount: 100000.00,
-            amount: 19000.00,
-            baseUnitMeasure: 100000.00,
-            measurementunit: 'UND',
-            perUnitAmount: 19.00,
-            percent: 19.00,
-            code: '01',
-            name: 'IVA'
-        }
-    }],
+    items: [],
+    orderReference: undefined,
     relatedCufe: '',
-    relatedInvoiceDate: new Date()
+    relatedInvoiceDate: undefined
 };
 
-const ubl = UblFactory.getInstance(document, company);
+const ubl = CarvajalUblFactory.getInstance(document, company);
 
 (async () => {
     console.log(
